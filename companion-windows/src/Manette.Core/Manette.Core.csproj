@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- No Windows, driver, UI, or networking-stack dependencies belong in this project. -->
+  <PropertyGroup>
+    <RootNamespace>Manette.Core</RootNamespace>
+    <AssemblyName>Manette.Core</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Manette.Core.Tests" />
+  </ItemGroup>
+</Project>

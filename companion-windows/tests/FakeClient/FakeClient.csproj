@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- A console "phone": reference client for the protocol, and a way to test the PC side with no Android app. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Manette.FakeClient</RootNamespace>
+    <AssemblyName>fakeclient</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Manette.Core\Manette.Core.csproj" />
+    <ProjectReference Include="..\..\src\Manette.Network\Manette.Network.csproj" />
+  </ItemGroup>
+</Project>

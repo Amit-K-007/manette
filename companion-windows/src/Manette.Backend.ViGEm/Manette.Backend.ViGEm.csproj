@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The ONLY project that references ViGEm. If the driver ever has to be swapped, this is what changes. -->
+  <PropertyGroup>
+    <RootNamespace>Manette.Backend.ViGEm</RootNamespace>
+    <AssemblyName>Manette.Backend.ViGEm</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Check nuget.org for the current stable version when you first restore. -->
+    <PackageReference Include="Nefarius.ViGEm.Client" Version="1.21.256" />
+    <ProjectReference Include="..\Manette.Core\Manette.Core.csproj" />
+    <InternalsVisibleTo Include="Manette.Backend.ViGEm.Tests" />
+  </ItemGroup>
+</Project>

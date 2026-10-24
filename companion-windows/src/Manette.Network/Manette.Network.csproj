@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Manette.Network</RootNamespace>
+    <AssemblyName>Manette.Network</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Manette.Core\Manette.Core.csproj" />
+    <InternalsVisibleTo Include="Manette.Network.Tests" />
+  </ItemGroup>
+</Project>
