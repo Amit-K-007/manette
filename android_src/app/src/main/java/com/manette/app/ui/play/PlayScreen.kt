@@ -13,18 +13,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.manette.app.layout.definitions.XboxDefinition
+import com.manette.app.layout.model.Preset
 import com.manette.app.platform.PlayEnvironment
 import com.manette.app.session.ConnectionController
 import com.manette.app.transport.ConnectionState
 
 /** The controller plus a tiny status line (bottom centre, the one empty spot) and an Exit button. NOTE: not compiled. */
 @Composable
-fun PlayScreen(c: ConnectionController) {
+fun PlayScreen(c: ConnectionController, preset: Preset?) {
     PlayEnvironment()
     Box(Modifier.fillMaxSize().background(Color(0xFF101114))) {
         ControllerSurface(
             definition = XboxDefinition.definition,
-            preset = null,
+            preset = preset,
             onState = { c.send(it) },
         )
         Column(Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp), horizontalAlignment = Alignment.CenterHorizontally) {

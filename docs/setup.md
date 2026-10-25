@@ -74,7 +74,7 @@ and drop our sources in. This adds no extra dependencies.
    **API 29**. Package `com.manette.app` is a placeholder; if you pick another, change the `package`/`import`
    lines (find-and-replace `com.manette.app`). Do this now, it is hard to change later.
 2. Delete the wizard's `MainActivity.kt` and its `ui/theme` folder (ours uses plain `MaterialTheme`).
-3. Copy everything from this repo's `android/app/src/main/java/com/manette/app/` and `android/app/src/test/java/com/manette/app/`
+3. Copy everything from this repo's `android_src/app/src/main/java/com/manette/app/` and `android_src/app/src/test/java/com/manette/app/`
    into the matching folders of your project (our `MainActivity.kt` replaces the deleted one).
 4. In `AndroidManifest.xml` add, above `<application>`:
    ```xml

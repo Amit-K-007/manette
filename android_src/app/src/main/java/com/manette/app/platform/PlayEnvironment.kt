@@ -64,3 +64,24 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
+
+/**
+ * Immersive + keep-awake only. The layout editor uses this so its surface is exactly the size of the play surface
+ * (sizes are relative to the screen height, so bars would make the editor differ from what you then play).
+ */
+@Composable
+fun ImmersiveMode() {
+    val view = LocalView.current
+    val context = LocalContext.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        val window = context.findActivity()?.window
+        val insets = window?.let { WindowCompat.getInsetsController(it, view) }
+        insets?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        insets?.hide(WindowInsetsCompat.Type.systemBars())
+        onDispose {
+            view.keepScreenOn = false
+            insets?.show(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+}

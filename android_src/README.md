@@ -22,7 +22,12 @@ app/src/main/java/com/manette/app/
   layout/model/                 Control, Placement, Preset, ControllerDefinition (what a controller IS)
   layout/definitions/XboxDefinition.kt   default Xbox arrangement (NES/PS1 later = more definitions)
   layout/ResolvedLayout.kt      normalized preset -> pixels for a real surface
+  layout/editor/LayoutEditor.kt  editing rules (drag, clamp on screen, scale/opacity, save only diffs), pure Kotlin
+  layout/storage/                PresetJson (versioned, strict) + FilePresetRepository (atomic files, safe ids)
+  json/Json.kt                  dependency-free JSON reader/writer
   layout/mapping/TouchMapper.kt multi-touch -> GamepadState (sticks, d-pad, sliding buttons), pure Kotlin
+  ui/editor/LayoutEditorScreen.kt  edit screen (thin; rules are in LayoutEditor). NOT COMPILED
+  session/PresetsState.kt       Compose state over the preset repository. NOT COMPILED
   ui/play/ControllerSurface.kt  Compose Canvas: pointer events -> TouchMapper, draws the pad. NOT COMPILED YET
 app/src/test/java/com/manette/app/
   protocol/ProtocolVectorTest.kt   runs against ../protocol/test-vectors.json (shared with the C# tests)
@@ -32,6 +37,7 @@ app/src/test/java/com/manette/app/
   transport/TransportTestSupport.kt  fake PC (an independent implementation of the PC side), manual clock/scheduler
   transport/ManualIpProviderTest.kt
   layout/TouchMapperTest.kt        multi-touch behaviour, stick/d-pad math, random-input range fuzz
+  layout/LayoutEditorTest.kt, layout/PresetStorageTest.kt, json/JsonTest.kt   editor rules, storage, JSON
   layout/LayoutTest.kt             resolver, presets, "default controls never overlap or leave the screen"
 ```
 

@@ -108,7 +108,7 @@ fun ControllerSurface(
     ) {
         @Suppress("UNUSED_VARIABLE")
         val redrawTrigger = frame                                   // reading it here makes the canvas redraw on change
-        if (layout != null && mapper != null) drawController(layout, mapper, paint)
+        if (layout != null && mapper != null) drawController(layout, mapper.pressedIds(), mapper.dpadBits(), mapper::knob, paint)
     }
 }
 
@@ -123,14 +123,28 @@ private fun faceColor(id: String): Color? = when (id) {
     else -> null
 }
 
-private fun DrawScope.drawController(layout: ResolvedLayout, mapper: TouchMapper, paint: Paint) {
-    val pressed = mapper.pressedIds()
-    val dpadBits = mapper.dpadBits()
+/** Draws a layout. Used by the play surface (live state) and the layout editor (no state, a selection outline). */
+internal fun DrawScope.drawController(
+    layout: ResolvedLayout,
+    pressed: Set<String>,
+    dpadBits: Int,
+    knobOf: (String) -> Pair<Float, Float>,
+    paint: Paint,
+    selectedId: String? = null,
+) {
     for (e in layout.elements) {
         when (val c = e.control) {
             is Control.Button -> drawButton(e, c, e.id in pressed, paint)
             is Control.Dpad -> drawDpad(e, dpadBits)
-            is Control.Stick -> drawStick(e, mapper.knob(e.id), paint, c.label)
+            is Control.Stick -> drawStick(e, knobOf(e.id), paint, c.label)
+        }
+        if (e.id == selectedId) {
+            val pad = 8f
+            drawRoundRect(
+                Color(0xFFFFC107), topLeft = Offset(e.cx - e.halfW - pad, e.cy - e.halfH - pad),
+                size = Size(e.halfW * 2f + pad * 2f, e.halfH * 2f + pad * 2f),
+                cornerRadius = CornerRadius(e.halfH * 0.35f + pad), style = Stroke(width = 5f),
+            )
         }
     }
 }

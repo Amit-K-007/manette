@@ -14,7 +14,7 @@ companion-windows/               C# / .NET 10 Windows companion
   tests/Manette.Core.Tests/      xUnit tests, driven by the shared vectors
   tests/Manette.Network.Tests/   real-UDP loopback end-to-end tests + DNS tests
   tests/FakeClient/              console "phone": reference client and test tool
-android/                         Kotlin protocol layer (done, tested); UI/transport not started
+android_src/                     our Kotlin sources: copy into your Android Studio project (kept at android/)
 ```
 
 ## Manette.Core in one picture
