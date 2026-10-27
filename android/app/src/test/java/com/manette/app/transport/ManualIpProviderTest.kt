@@ -30,7 +30,10 @@ class ManualIpProviderTest {
     fun manualProviderHasNothingToDiscover() {
         val p = ManualIpProvider()
         var found = 0
-        val handle = p.startDiscovery { found++ }
+        val handle = p.startDiscovery(object : DiscoveryListener {
+            override fun onFound(pc: PcEndpoint) { found++ }
+            override fun onLost(name: String) { found++ }
+        })
         handle.close()
         assertEquals(0, found)
         assertNotNull(p.displayName)

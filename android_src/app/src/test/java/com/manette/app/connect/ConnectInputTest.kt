@@ -59,4 +59,21 @@ class ConnectInputTest {
     fun everyRejectReasonHasAMessage() {
         for (r in RejectReason.entries) assertTrue(RejectMessages.describe(r).length > 10)
     }
+
+    @Test
+    fun aMultiAddressLinkUsesTheAddressOnThePhonesOwnSubnet() {
+        val r = ready(ConnectInputParser.parse("", link, localIpv4 = listOf("192.168.137.55")))
+        assertEquals("192.168.137.1", r.host)                        // the USB-tether address, not the first one listed
+        assertEquals("192.168.1.20", ready(ConnectInputParser.parse("", link, localIpv4 = listOf("192.168.1.77"))).host)
+        assertEquals("falls back to the first", "192.168.1.20", ready(ConnectInputParser.parse("", link, localIpv4 = emptyList())).host)
+    }
+
+    @Test
+    fun theInstallIdFromTheLinkIsKept() {
+        val withId = "$link&i=a1b2c3d4"
+        assertEquals("a1b2c3d4", ready(ConnectInputParser.parse("", withId)).installId)
+        assertEquals(null, ready(ConnectInputParser.parse("", link)).installId)
+        assertEquals("a1b2c3d4", PairingCode.parseLink(withId)!!.installId)
+        assertEquals(null, PairingCode.parseLink("$link&i=bad id!")!!.installId)        // junk ids are dropped, not trusted
+    }
 }

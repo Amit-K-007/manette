@@ -22,6 +22,10 @@ app/src/main/java/com/manette/app/
   layout/model/                 Control, Placement, Preset, ControllerDefinition (what a controller IS)
   layout/definitions/XboxDefinition.kt   default Xbox arrangement (NES/PS1 later = more definitions)
   layout/ResolvedLayout.kt      normalized preset -> pixels for a real surface
+  connect/HostPicker.kt          pick the PC address on the phone's own subnet (QR lists several)
+  discovery/DiscoveryLogic.kt    TXT parsing, found/lost tracker, one-at-a-time queue, address follow (pure, tested)
+  discovery/NsdDiscovery.kt      Android NsdManager provider. NOT COMPILED
+  platform/QrScanner.kt          Google code scanner wrapper. NOT COMPILED
   layout/editor/LayoutEditor.kt  editing rules (drag, clamp on screen, scale/opacity, save only diffs), pure Kotlin
   layout/storage/                PresetJson (versioned, strict) + FilePresetRepository (atomic files, safe ids)
   json/Json.kt                  dependency-free JSON reader/writer

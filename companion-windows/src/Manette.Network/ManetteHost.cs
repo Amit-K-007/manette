@@ -40,6 +40,9 @@ public sealed class ManetteHost : IDisposable
     public SessionManager Sessions { get; }
     public ITrustedDeviceStore Store { get; }
 
+    /// <summary>Stable 8-hex id for this PC installation. In the pairing link and in mDNS, so phones can find it again after an IP change.</summary>
+    public string InstallId { get; }
+
     public event Action<string>? Log;
 
     public ManetteHost(
@@ -47,6 +50,7 @@ public sealed class ManetteHost : IDisposable
     {
         _options = options ?? new ManetteHostOptions();
         Store = store ?? new InMemoryTrustedDeviceStore();
+        InstallId = _options.InstallId ?? Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
         Pairing = new PairingManager();
         Sessions = new SessionManager(pads, _options.Sessions);
         _endpoint = new UdpEndpoint(_options.BindAddress, _options.Port);
@@ -55,12 +59,11 @@ public sealed class ManetteHost : IDisposable
 
         if (_options.EnableMdns)
         {
-            string id = _options.InstallId ?? Convert.ToHexString(RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
             _mdns = new MdnsAdvertiser(new MdnsServiceInfo
             {
                 InstanceName = _options.PcName,
                 Port = (ushort)_endpoint.LocalEndPoint.Port,
-                Id = id,
+                Id = InstallId,
                 PairingOpen = () => Pairing.IsOpen,
             });
             _mdns.Log += m => Log?.Invoke(m);
@@ -95,7 +98,7 @@ public sealed class ManetteHost : IDisposable
         var offer = Pairing.Open();
         string link = PairingCode.BuildLink(
             HostAddressProvider.GetCandidateHosts().Select(a => a.ToString()),
-            (ushort)Port, offer.Secret, _options.PcName);
+            (ushort)Port, offer.Secret, _options.PcName, InstallId);
         return (offer, link);
     }
 

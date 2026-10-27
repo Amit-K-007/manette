@@ -7,6 +7,8 @@ class PairingLink(
     val port: Int,
     val secret: ByteArray,
     val name: String,
+    /** Identifies the PC installation (also in its mDNS record), so the phone can find it again after an IP change. */
+    val installId: String? = null,
 )
 
 /** Pairing secret presentation formats (docs/protocol.md section 4.3). */
@@ -72,7 +74,8 @@ object PairingCode {
         val port = query["p"]?.toIntOrNull()?.takeIf { it in 1..65535 } ?: return null
         val secret = query["s"]?.let { parseTypedCode(it) } ?: return null
         val hosts = query["h"]?.split(',')?.filter { it.isNotEmpty() }?.takeIf { it.isNotEmpty() } ?: return null
-        return PairingLink(version, hosts, port, secret, query["n"] ?: "")
+        val installId = query["i"]?.takeIf { it.isNotEmpty() && it.length <= 32 && it.all { c -> c.isLetterOrDigit() } }
+        return PairingLink(version, hosts, port, secret, query["n"] ?: "", installId)
     }
 
     /** Exact percent-decoding (no '+' to space), UTF-8. Null on a malformed escape. */

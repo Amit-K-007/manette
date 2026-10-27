@@ -7,7 +7,7 @@ import com.manette.app.transport.udp.ManualIpProvider
 
 /** What the user typed on the connect screen, checked. Pure Kotlin so it is unit tested. */
 sealed interface ConnectInput {
-    class Ready(val host: String, val port: Int, val secret: ByteArray) : ConnectInput
+    class Ready(val host: String, val port: Int, val secret: ByteArray, val installId: String? = null) : ConnectInput
     class Invalid(val message: String) : ConnectInput
 }
 
@@ -16,7 +16,7 @@ object ConnectInputParser {
      * [codeText] is either the typed code from the PC ("ABCD-EFGH-...") or the whole manette:// link.
      * [hostText] may be blank when a link was pasted (its first address is used); if both are given, the typed host wins.
      */
-    fun parse(hostText: String, codeText: String): ConnectInput {
+    fun parse(hostText: String, codeText: String, localIpv4: List<String> = emptyList()): ConnectInput {
         val code = codeText.trim()
         val link = PairingCode.parseLink(code)
         val secret = link?.secret ?: PairingCode.parseTypedCode(code)
@@ -25,9 +25,9 @@ object ConnectInputParser {
         if (hostText.isNotBlank()) {
             val ep = ManualIpProvider.parse(hostText, link?.port ?: Protocol.DEFAULT_PORT)
                 ?: return ConnectInput.Invalid("Enter the PC's address like 192.168.1.20 (optionally :port).")
-            return ConnectInput.Ready(ep.host, ep.port, secret)
+            return ConnectInput.Ready(ep.host, ep.port, secret, link?.installId)
         }
-        if (link != null) return ConnectInput.Ready(link.hosts.first(), link.port, secret)
+        if (link != null) return ConnectInput.Ready(HostPicker.pick(link.hosts, localIpv4), link.port, secret, link.installId)
         return ConnectInput.Invalid("Enter the PC's IP address (run ipconfig on the PC).")
     }
 }

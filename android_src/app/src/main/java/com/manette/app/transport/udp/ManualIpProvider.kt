@@ -2,6 +2,7 @@ package com.manette.app.transport.udp
 
 import com.manette.app.protocol.Protocol
 import com.manette.app.transport.ConnectionProvider
+import com.manette.app.transport.DiscoveryListener
 import com.manette.app.transport.PcEndpoint
 
 /**
@@ -13,7 +14,7 @@ class ManualIpProvider : ConnectionProvider {
     override val displayName: String = "Enter IP address"
 
     /** Manual entry has nothing to discover. */
-    override fun startDiscovery(onFound: (PcEndpoint) -> Unit): AutoCloseable = AutoCloseable { }
+    override fun startDiscovery(listener: DiscoveryListener): AutoCloseable = AutoCloseable { }
 
     companion object {
         /**

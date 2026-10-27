@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- QR code encoding. ThirdParty/QrCodeGenerator is vendored, unmodified, from github.com/manuelbl/QrCodeGenerator
+       (MIT, see its LICENSE.txt), itself based on Nayuki's QR Code generator. Vendored rather than a NuGet reference so
+       the build needs no extra package. -->
+  <PropertyGroup>
+    <RootNamespace>Manette.QrCode</RootNamespace>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Manette.Core.Tests" />
+  </ItemGroup>
+</Project>

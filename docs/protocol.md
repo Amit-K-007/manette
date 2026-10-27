@@ -87,8 +87,8 @@ Neither `pairing_secret` nor any key is ever sent over the network. The phone ge
 The same 16 bytes are presented to the user in two forms:
 
 1. **QR code** (preferred): a URI
-   `manette://pair?v=1&h=<host>[,<host>...]&p=<port>&s=<secret>&n=<pc name>`
-   where `s` is the secret in unpadded Base32 (26 characters). Multiple hosts may be listed so the phone can try each network interface.
+   `manette://pair?v=1&h=<host>[,<host>...]&p=<port>&s=<secret>&n=<pc name>[&i=<install id>]`
+   where `s` is the secret in unpadded Base32 (26 characters). Multiple hosts may be listed (Wi-Fi, Ethernet, a USB-tether adapter); the phone uses the one on the same subnet as one of its own addresses. The optional `i` is the PC's 8-hex install id (also the `id` in its mDNS TXT record), which lets the phone find the same PC again if its IP address changes. Receivers ignore a missing or malformed `i`.
 2. **Typed code** (fallback): the same Base32 secret shown as `XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX`, with the host entered manually. The code is long on purpose. A short PIN would be brute-forceable offline from a captured HELLO, so v1 does not use one.
 
 ### 4.4 Pairing window rules (PC side)

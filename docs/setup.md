@@ -30,12 +30,17 @@ Do step 1 (Windows) first, then step 4 (phone).
    netsh advfirewall firewall add rule name="Manette" dir=in action=allow protocol=UDP localport=26760 profile=any
    ```
    `profile=any` matters: a USB-tether adapter is often classed as a Public network.
+   For automatic discovery also allow mDNS (the phone asks on UDP 5353 and the PC answers):
+   ```
+   netsh advfirewall firewall add rule name="Manette mDNS" dir=in action=allow protocol=UDP localport=5353 profile=any
+   ```
 4. Build and start the companion from the repo root:
    ```
    cd companion-windows
    dotnet run --project src/Manette.Cli
    ```
-   It prints a **typed pairing code** and a `manette://` link, valid 5 minutes, single use. Keys while running:
+   It prints a **QR code**, a **typed pairing code** and a `manette://` link, valid 5 minutes, single use.
+   The QR needs a terminal that understands colours (Windows Terminal does); use `--no-qr` if it shows garbage. Keys while running:
    `p` new code, `s` status, `q` quit. If it says the driver is missing, ViGEmBus is not installed or not running.
 5. Package restore needs internet the first time (it downloads `Nefarius.ViGEm.Client` and the test packages).
 
@@ -84,11 +89,26 @@ and drop our sources in. This adds no extra dependencies.
    ```
    and on the `<activity>` add `android:screenOrientation="sensorLandscape"` and
    `android:configChanges="orientation|screenSize|keyboardHidden"`.
+   **QR scanning dependency:** add to the app module's `dependencies` (check Maven for the latest version):
+   `implementation("com.google.android.gms:play-services-code-scanner:16.1.0")`. It uses Google Play services' scanner,
+   so there is no camera permission and no CameraX. Optional but recommended, inside `<application>` in the manifest:
+   `<meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />`
+   (downloads the scanner at install time). On a phone without Play services scanning reports an error; paste the
+   link or code instead.
 5. Sync and build. Likely small fixes: a Compose function renamed in your version (for example `consume()` in
    `ControllerSurface.kt`), or a missing import. Paste any errors to me.
 6. Run the unit tests first (`./gradlew :app:testDebugUnitTest`): they should all pass (84 on the JVM). If any fail
    in Android Studio but passed for me, that is a real finding.
 7. Turn on **USB debugging** on the phone and run the app on it.
+
+### Pairing the easy way
+- **Scan:** on the connect screen tap **Scan QR code from the PC**, point at the QR in the PC terminal. It pairs and connects.
+  A QR that lists several PC addresses (Wi-Fi and a USB tether) uses the one on the phone's own subnet.
+- **Discovery:** PCs on the network appear under "PCs on this network" (with "ready to pair" while a code is open).
+  Tap one to fill the address, then type the code. If your PC's IP address changes later, the app finds it again by its
+  install id and updates the saved address by itself.
+- If discovery shows nothing: allow UDP 5353 in the PC firewall (above), check AP isolation, and note that **discovery is
+  the least-tested part** (the PC answers multicast mDNS; only the unicast path was tested). QR and manual IP always work.
 
 ### First phone run
 1. Start the PC companion (step 1). Note the PC's IPv4 (`ipconfig`) and the typed code.

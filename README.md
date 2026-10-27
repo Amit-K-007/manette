@@ -10,6 +10,7 @@ companion-windows/               C# / .NET 10 Windows companion
   src/Manette.Core/              protocol, pairing, sessions, server logic. No driver, UI or socket code.
   src/Manette.Network/           UDP socket, tick loop, mDNS advertiser, ManetteHost (the engine)
   src/Manette.Backend.ViGEm/     the only project that references ViGEm: virtual Xbox 360 pads
+  src/Manette.QrCode/            QR encoding (vendored MIT library) + terminal renderer
   src/Manette.Cli/               headless companion ("manette"), runs the whole engine from a console
   tests/Manette.Core.Tests/      xUnit tests, driven by the shared vectors
   tests/Manette.Network.Tests/   real-UDP loopback end-to-end tests + DNS tests

@@ -9,5 +9,6 @@
     <ProjectReference Include="..\Manette.Core\Manette.Core.csproj" />
     <ProjectReference Include="..\Manette.Network\Manette.Network.csproj" />
     <ProjectReference Include="..\Manette.Backend.ViGEm\Manette.Backend.ViGEm.csproj" />
+    <ProjectReference Include="..\Manette.QrCode\Manette.QrCode.csproj" />
   </ItemGroup>
 </Project>

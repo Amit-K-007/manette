@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import com.manette.app.layout.definitions.XboxDefinition
 import com.manette.app.layout.storage.FilePresetRepository
 import com.manette.app.session.ConnectionController
+import com.manette.app.session.DiscoveryState
 import com.manette.app.session.PresetsState
 import com.manette.app.ui.editor.LayoutEditorScreen
 import java.io.File
@@ -26,21 +27,29 @@ import com.manette.app.ui.play.PlayScreen
 class MainActivity : ComponentActivity() {
     private lateinit var controller: ConnectionController
     private lateinit var presets: PresetsState
+    private lateinit var discovery: DiscoveryState
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         controller = ConnectionController(applicationContext)
+        discovery = DiscoveryState(applicationContext)
         presets = PresetsState(FilePresetRepository(File(filesDir, "presets")), XboxDefinition.ID)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
-                Surface(Modifier.fillMaxSize()) { Root(controller, presets) }
+                Surface(Modifier.fillMaxSize()) { Root(controller, presets, discovery) }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        discovery.start()
     }
 
     /** Leaving the app releases the controller on the PC (it goes neutral). Reconnect is one tap. */
     override fun onStop() {
         super.onStop()
+        discovery.stop()
         controller.disconnect()
     }
 
@@ -51,7 +60,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun Root(c: ConnectionController, presets: PresetsState) {
+private fun Root(c: ConnectionController, presets: PresetsState, discovery: DiscoveryState) {
     var editing by remember { mutableStateOf(false) }
     when {
         c.state == ConnectionState.CONNECTED || c.state == ConnectionState.RECONNECTING -> PlayScreen(c, presets.active)
@@ -61,6 +70,6 @@ private fun Root(c: ConnectionController, presets: PresetsState) {
             onSave = { presets.save(it); editing = false },
             onCancel = { editing = false },
         )
-        else -> ConnectScreen(c, presets, onEditLayout = { editing = true })
+        else -> ConnectScreen(c, presets, discovery, onEditLayout = { editing = true })
     }
 }

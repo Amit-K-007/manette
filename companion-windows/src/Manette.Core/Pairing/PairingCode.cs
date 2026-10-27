@@ -5,7 +5,7 @@ namespace Manette.Core.Pairing;
 
 /// <summary>What a scanned QR code (or a parsed pairing link) tells the phone.</summary>
 public sealed record PairingLink(
-    byte Version, IReadOnlyList<string> Hosts, ushort Port, byte[] Secret, string Name);
+    byte Version, IReadOnlyList<string> Hosts, ushort Port, byte[] Secret, string Name, string? InstallId = null);
 
 /// <summary>Pairing secret presentation formats (docs/protocol.md section 4.3).</summary>
 public static class PairingCode
@@ -74,12 +74,13 @@ public static class PairingCode
 
     /// <summary>manette://pair?v=1&amp;h=a,b&amp;p=26760&amp;s=BASE32&amp;n=Name</summary>
     public static string BuildLink(
-        IEnumerable<string> hosts, ushort port, ReadOnlySpan<byte> secret, string pcName) =>
+        IEnumerable<string> hosts, ushort port, ReadOnlySpan<byte> secret, string pcName, string? installId = null) =>
         "manette://pair?v=" + ProtocolConstants.ProtocolVersion +
         "&h=" + string.Join(',', hosts.Select(Uri.EscapeDataString)) +
         "&p=" + port +
         "&s=" + ToBase32(secret) +
-        "&n=" + Uri.EscapeDataString(pcName);
+        "&n=" + Uri.EscapeDataString(pcName) +
+        (installId is null ? "" : "&i=" + Uri.EscapeDataString(installId));
 
     public static bool TryParseLink(string text, out PairingLink? link)
     {
@@ -100,9 +101,10 @@ public static class PairingCode
         if (!query.TryGetValue("s", out var s) || !TryParseTypedCode(s, out var secret)) return false;
         if (!query.TryGetValue("h", out var h) || h.Length == 0) return false;
         query.TryGetValue("n", out var name);
+        query.TryGetValue("i", out var installId);
 
         link = new PairingLink(
-            version, h.Split(',', StringSplitOptions.RemoveEmptyEntries), port, secret, name ?? "");
+            version, h.Split(',', StringSplitOptions.RemoveEmptyEntries), port, secret, name ?? "", installId);
         return true;
     }
 }

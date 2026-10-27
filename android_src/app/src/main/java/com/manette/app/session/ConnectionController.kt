@@ -10,7 +10,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.manette.app.connect.ConnectInput
 import com.manette.app.connect.ConnectInputParser
+import com.manette.app.connect.LocalAddresses
 import com.manette.app.connect.RejectMessages
+import com.manette.app.discovery.AddressFollower
+import com.manette.app.transport.PcEndpoint
 import com.manette.app.core.GamepadState
 import com.manette.app.protocol.DeviceId
 import com.manette.app.protocol.Hex
@@ -20,7 +23,7 @@ import com.manette.app.transport.TransportListener
 import com.manette.app.transport.udp.UdpTransport
 import java.net.InetSocketAddress
 
-class SavedPc(val host: String, val port: Int, val deviceKey: ByteArray)
+class SavedPc(val host: String, val port: Int, val deviceKey: ByteArray, val installId: String? = null)
 
 /**
  * Owns the one [UdpTransport], remembers the paired PC, and exposes Compose state. Transport callbacks arrive on
@@ -41,6 +44,7 @@ class ConnectionController(context: Context) {
     @Volatile private var transport: UdpTransport? = null
     @Volatile private var attemptHost = ""
     @Volatile private var attemptPort = 0
+    @Volatile private var attemptInstallId: String? = null
 
     private val listener = object : TransportListener {
         override fun onStateChanged(state: ConnectionState) {
@@ -51,7 +55,7 @@ class ConnectionController(context: Context) {
             }
         }
         override fun onPaired(deviceKey: ByteArray) {
-            val pc = SavedPc(attemptHost, attemptPort, deviceKey)
+            val pc = SavedPc(attemptHost, attemptPort, deviceKey, attemptInstallId)
             save(pc)
             main.post { savedPc = pc }
         }
@@ -60,11 +64,28 @@ class ConnectionController(context: Context) {
         override fun onLatency(rttMs: Int) { main.post { this@ConnectionController.rttMs = rttMs } }
     }
 
-    fun pair(hostText: String, codeText: String) {
-        when (val r = ConnectInputParser.parse(hostText, codeText)) {
+    /** [discovered] lets a typed-in address learn the PC's install id if discovery has seen it. */
+    fun pair(hostText: String, codeText: String, discovered: List<PcEndpoint> = emptyList()) {
+        when (val r = ConnectInputParser.parse(hostText, codeText, LocalAddresses.ipv4())) {
             is ConnectInput.Invalid -> message = r.message
-            is ConnectInput.Ready -> start(r.host, r.port) { it.pair(r.secret) }
+            is ConnectInput.Ready -> {
+                attemptInstallId = r.installId ?: AddressFollower.installIdFor(r.host, r.port, discovered)
+                start(r.host, r.port) { it.pair(r.secret) }
+            }
         }
+    }
+
+    fun showMessage(text: String) { message = text }
+
+    /** If the saved PC turns up at a different address (DHCP changed it), switch to the new address. Only while idle. */
+    fun followSavedPc(found: List<PcEndpoint>) {
+        val saved = savedPc ?: return
+        if (state != ConnectionState.DISCONNECTED) return
+        val moved = AddressFollower.newAddress(saved.installId, saved.host, saved.port, found) ?: return
+        val updated = SavedPc(moved.host, moved.port, saved.deviceKey, saved.installId)
+        save(updated)
+        savedPc = updated
+        message = "Your PC is now at ${moved.host}; address updated."
     }
 
     fun reconnect() {
@@ -78,7 +99,7 @@ class ConnectionController(context: Context) {
     fun disconnect() { transport?.disconnect() }
 
     fun forgetPc() {
-        prefs.edit().remove("pc_host").remove("pc_port").remove("device_key").apply()
+        prefs.edit().remove("pc_host").remove("pc_port").remove("device_key").remove("pc_id").apply()
         savedPc = null
     }
 
@@ -111,10 +132,12 @@ class ConnectionController(context: Context) {
     private fun loadSaved(): SavedPc? {
         val host = prefs.getString("pc_host", null) ?: return null
         val key = prefs.getString("device_key", null) ?: return null
-        return SavedPc(host, prefs.getInt("pc_port", 26760), Hex.decode(key))
+        return SavedPc(host, prefs.getInt("pc_port", 26760), Hex.decode(key), prefs.getString("pc_id", null))
     }
 
     private fun save(pc: SavedPc) {
-        prefs.edit().putString("pc_host", pc.host).putInt("pc_port", pc.port).putString("device_key", Hex.encode(pc.deviceKey)).apply()
+        val e = prefs.edit().putString("pc_host", pc.host).putInt("pc_port", pc.port).putString("device_key", Hex.encode(pc.deviceKey))
+        if (pc.installId != null) e.putString("pc_id", pc.installId) else e.remove("pc_id")
+        e.apply()
     }
 }

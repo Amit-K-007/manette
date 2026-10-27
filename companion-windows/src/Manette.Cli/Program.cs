@@ -2,6 +2,7 @@ using Manette.Backend.ViGEm;
 using Manette.Core;
 using Manette.Core.Sessions;
 using Manette.Network;
+using Manette.QrCode;
 
 namespace Manette.Cli;
 
@@ -10,9 +11,10 @@ internal static class Program
     private const string Usage = """
         manette: headless Manette companion
 
-          manette [--fake-pads] [--port 26760] [--name "My PC"] [--no-mdns] [--rumble-hz 0] [--data-dir <dir>]
+          manette [--fake-pads] [--port 26760] [--name "My PC"] [--no-mdns] [--no-qr] [--rumble-hz 0] [--data-dir <dir>]
 
           --fake-pads   print controller state instead of creating real virtual Xbox pads (any OS, for testing)
+          --no-qr       do not draw the QR code (use this if your terminal shows garbage)
           --rumble-hz   advertise rumble at this rate to phones (0 = off, the default)
 
         While running:  p = new pairing code   s = status   q = quit
@@ -26,6 +28,9 @@ internal static class Program
             if (args[i] is "-h" or "--help") { Console.WriteLine(Usage); return 0; }
             if (args[i].StartsWith("--")) opt[args[i][2..]] = i + 1 < args.Length && !args[i + 1].StartsWith("--") ? args[++i] : "true";
         }
+
+        Console.OutputEncoding = System.Text.Encoding.UTF8;
+        bool showQr = !opt.ContainsKey("no-qr") && !Console.IsOutputRedirected && TerminalAnsi.Enable();
 
         string dataDir = opt.GetValueOrDefault("data-dir",
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Manette"));
@@ -66,7 +71,7 @@ internal static class Program
         host.Start();
 
         Console.WriteLine($"Listening on UDP {host.Port}. mDNS: {(host.MdnsRunning ? "on" : "off")}. Trusted devices: {host.Store.List().Count}.");
-        ShowPairing(host);
+        ShowPairing(host, showQr);
 
         while (true)
         {
@@ -74,21 +79,27 @@ internal static class Program
             if (line is null) { Thread.Sleep(Timeout.Infinite); }      // stdin closed (daemon): keep serving
             switch (line!.Trim().ToLowerInvariant())
             {
-                case "p": ShowPairing(host); break;
+                case "p": ShowPairing(host, showQr); break;
                 case "s": PrintSessions(host); break;
                 case "q": vigem?.Dispose(); return 0;
             }
         }
     }
 
-    private static void ShowPairing(ManetteHost host)
+    private static void ShowPairing(ManetteHost host, bool showQr)
     {
         var (offer, link) = host.OpenPairing();
         Console.WriteLine();
         Console.WriteLine("Pair a phone (valid 5 minutes, single use):");
         Console.WriteLine($"  Typed code : {offer.TypedCode}");
-        Console.WriteLine($"  Link (QR)  : {link}");
+        Console.WriteLine($"  Link       : {link}");
         Console.WriteLine();
+        if (showQr)
+        {
+            Console.WriteLine("Scan with the Manette app:");
+            foreach (var line in QrConsole.Render(link)) Console.WriteLine("  " + line);
+            Console.WriteLine();
+        }
     }
 
     private static void PrintSessions(ManetteHost host)
