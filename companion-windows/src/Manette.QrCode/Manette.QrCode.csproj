@@ -5,6 +5,8 @@
   <PropertyGroup>
     <RootNamespace>Manette.QrCode</RootNamespace>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- The vendored library was written without nullable checking; our solution-wide setting only produced noise there. -->
+    <Nullable>disable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Manette.Core.Tests" />

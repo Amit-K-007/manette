@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Windows tray app: a notification-area icon, a pairing window with the QR code, and the engine running behind it.
+       WinForms, not WPF: no XAML, far less UI code for the same result. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>Manette</AssemblyName>
+    <RootNamespace>Manette.App</RootNamespace>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <!-- This UI has never been compiled (no Windows toolchain was available when it was written), so do not let a
+         warning stop the first build. Turn this back on once it builds clean. -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Manette.Core\Manette.Core.csproj" />
+    <ProjectReference Include="..\Manette.Network\Manette.Network.csproj" />
+    <ProjectReference Include="..\Manette.Backend.ViGEm\Manette.Backend.ViGEm.csproj" />
+    <ProjectReference Include="..\Manette.QrCode\Manette.QrCode.csproj" />
+    <ProjectReference Include="..\Manette.Companion\Manette.Companion.csproj" />
+  </ItemGroup>
+</Project>

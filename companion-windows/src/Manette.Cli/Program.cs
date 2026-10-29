@@ -1,4 +1,5 @@
 using Manette.Backend.ViGEm;
+using Manette.Companion;
 using Manette.Core;
 using Manette.Core.Sessions;
 using Manette.Network;
@@ -60,11 +61,12 @@ internal static class Program
             Port = opt.TryGetValue("port", out var p) ? int.Parse(p) : 26760,
             PcName = opt.GetValueOrDefault("name", Environment.MachineName),
             EnableMdns = !opt.ContainsKey("no-mdns"),
-            InstallId = GetInstallId(Path.Combine(dataDir, "install-id")),
+            InstallId = InstallIdStore.GetOrCreate(Path.Combine(dataDir, "install-id")),
             Sessions = new SessionOptions { RumbleHzMax = opt.TryGetValue("rumble-hz", out var r) ? ushort.Parse(r) : (ushort)0 },
         };
 
-        using var host = new ManetteHost(pads, options, new JsonTrustedDeviceStore(Path.Combine(dataDir, "trusted-devices.json")));
+        using var host = new ManetteHost(pads, options, new ProtectedTrustedDeviceStore(
+            Path.Combine(dataDir, "trusted-devices.v2.json"), CreateProtector(), Path.Combine(dataDir, "trusted-devices.json")));
         host.Log += m => Console.WriteLine("[log] " + m);
         host.Server.DevicePaired += d => Console.WriteLine($"[paired] '{d.Name}' is now trusted.");
         host.Sessions.SessionsChanged += (_, _) => PrintSessions(host);
@@ -110,11 +112,11 @@ internal static class Program
             Console.WriteLine($"   {s.Name,-16} {s.State,-7} slot {(s.Slot is { } sl ? sl.ToString() : "?")}  {s.Remote}  {s.PacketsAccepted} packets");
     }
 
-    private static string GetInstallId(string path)
+    /// <summary>Windows DPAPI where available. Elsewhere (development only) keys are stored unprotected.</summary>
+    private static ISecretProtector CreateProtector()
     {
-        if (File.Exists(path)) return File.ReadAllText(path).Trim();
-        string id = Convert.ToHexString(System.Security.Cryptography.RandomNumberGenerator.GetBytes(4)).ToLowerInvariant();
-        File.WriteAllText(path, id);
-        return id;
+        if (OperatingSystem.IsWindows()) return new DpapiProtector();
+        Console.WriteLine("Note: not on Windows, so trusted-device keys are stored UNPROTECTED (development only).");
+        return new PassthroughProtector();
     }
 }

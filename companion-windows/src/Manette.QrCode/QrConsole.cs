@@ -40,3 +40,18 @@ public static class QrConsole
     /// <summary>The number of QR modules per side for this text (useful for tests and layout).</summary>
     public static int ModuleCount(string text) => Qr.EncodeText(text, Qr.Ecc.Medium).Size;
 }
+
+/// <summary>The raw QR modules, for UIs that draw the code themselves (the tray app's pairing window).</summary>
+public static class QrMatrix
+{
+    /// <summary>[x, y] = true for a dark module. No border: the caller adds the quiet zone.</summary>
+    public static bool[,] Encode(string text)
+    {
+        var qr = Qr.EncodeText(text, Qr.Ecc.Medium);
+        var m = new bool[qr.Size, qr.Size];
+        for (int y = 0; y < qr.Size; y++)
+            for (int x = 0; x < qr.Size; x++)
+                m[x, y] = qr.GetModule(x, y);
+        return m;
+    }
+}

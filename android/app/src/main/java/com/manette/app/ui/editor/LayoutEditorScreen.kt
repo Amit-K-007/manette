@@ -3,6 +3,15 @@ package com.manette.app.ui.editor
 import android.graphics.Paint
 import android.graphics.Typeface
 import androidx.compose.foundation.Canvas
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -17,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -77,6 +87,8 @@ fun LayoutEditorScreen(
     var pillPos by remember { mutableStateOf<Offset?>(null) }
     val margin = with(LocalDensity.current) { 8.dp.toPx() }
     val box = size
+    val maxPanelHeight = with(LocalDensity.current) { (box.height - 2 * margin).coerceAtLeast(0f).toDp() }
+    val scroll = rememberScrollState()
     val paint = remember {
         Paint().apply { isAntiAlias = true; textAlign = Paint.Align.CENTER; typeface = Typeface.DEFAULT_BOLD }
     }
@@ -112,29 +124,37 @@ fun LayoutEditorScreen(
             return Offset(x, y)
         }
 
+        LaunchedEffect(panelSize, box) { panelPos?.let { panelPos = drag(it, Offset.Zero, panelSize) } }
+
         if (expanded) {
             val pos = panelPos ?: PanelPlacement.centeredTop(box.width.toFloat(), panelSize.width.toFloat(), margin).let { Offset(it.first, it.second) }
             Surface(
                 modifier = Modifier
                     .offset { IntOffset(pos.x.roundToInt(), pos.y.roundToInt()) }
                     .onSizeChanged { panelSize = it }
-                    .width(380.dp),
+                    .width(380.dp)
+                    .then(if (box.height > 0) Modifier.heightIn(max = maxPanelHeight) else Modifier),
                 color = Color(0xEE1E1F24), shape = RoundedCornerShape(12.dp),
             ) {
-                Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column {
                     // The header is the drag handle (dragging the sliders or text field must not move the panel).
                     Row(
-                        Modifier.fillMaxWidth().pointerInput(Unit) {
+                        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.primary).pointerInput(Unit) {
                             detectDragGestures { change, amount ->
                                 change.consume()
                                 panelPos = drag(panelPos ?: pos, amount, panelSize)
                             }
-                        },
+                        }.padding(start = 16.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text("\u2630  Layout  (drag here to move)", color = Color(0xCCFFFFFF), modifier = Modifier.weight(1f))
-                        TextButton(onClick = { expanded = false }) { Text("Minimize") }
+                        Text("Layout", color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { expanded = false }) { Text("\u2212", fontSize = 22.sp, color = MaterialTheme.colorScheme.onPrimary) }
                     }
+                    // Everything under the header scrolls, so a tall panel (a control selected, sliders showing) can always be reached.
+                    Column(
+                        Modifier.weight(1f, fill = false).scrollbar(scroll).verticalScroll(scroll).padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                     OutlinedTextField(
                         value = name, onValueChange = { name = it.take(PresetJson.MAX_NAME) }, label = { Text("Layout name") },
                         singleLine = true, modifier = Modifier.fillMaxWidth(),
@@ -159,6 +179,7 @@ fun LayoutEditorScreen(
                         Button(onClick = { save(initial?.id ?: PresetIds.newId()) }) { Text("Save") }
                         if (initial != null) Button(onClick = { save(PresetIds.newId()) }) { Text("Save as new") }
                     }
+                    }   // end of the scrolling content
                 }
             }
         } else {
@@ -175,10 +196,24 @@ fun LayoutEditorScreen(
                             pillPos = drag(pillPos ?: pos, amount, pillSize)
                         }
                     },
-                color = Color(0xEE1E1F24), shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.primary, shape = RoundedCornerShape(24.dp),
             ) {
-                Text("Layout", color = Color.White, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
+                Text("Layout", color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp))
             }
         }
+    }
+}
+
+/** Compose has no built-in scrollbar, so draw a thin one on the right edge while the content is scrollable. */
+private fun Modifier.scrollbar(state: ScrollState): Modifier = drawWithContent {
+    drawContent()
+    if (state.maxValue > 0) {
+        val viewport = size.height
+        val barHeight = viewport * viewport / (viewport + state.maxValue)
+        val barTop = (viewport - barHeight) * (state.value.toFloat() / state.maxValue)
+        drawRoundRect(
+            Color(0x99FFFFFF), topLeft = Offset(size.width - 6.dp.toPx(), barTop),
+            size = Size(4.dp.toPx(), barHeight), cornerRadius = CornerRadius(2.dp.toPx()),
+        )
     }
 }

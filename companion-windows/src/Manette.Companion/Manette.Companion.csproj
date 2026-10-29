@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Everything the tray app and the CLI share that is not UI: settings, protected key storage, install id. Plain net10.0, so it is unit tested on any OS. -->
+  <PropertyGroup>
+    <RootNamespace>Manette.Companion</RootNamespace>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Manette.Core\Manette.Core.csproj" />
+  </ItemGroup>
+</Project>

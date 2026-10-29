@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Manette.Core\Manette.Core.csproj" />
     <ProjectReference Include="..\..\src\Manette.QrCode\Manette.QrCode.csproj" />
+    <ProjectReference Include="..\..\src\Manette.Companion\Manette.Companion.csproj" />
     <!-- The shared, generated vectors from the repo root: protocol/test-vectors.json -->
     <Content Include="..\..\..\protocol\test-vectors.json" Link="test-vectors.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

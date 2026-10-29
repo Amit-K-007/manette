@@ -25,15 +25,10 @@ Do step 1 (Windows) first, then step 4 (phone).
    `C:\Program Files\Nefarius Software Solutions\ViGEm Bus Driver\ViGEmBus_Updater.ini` and change
    `URL=https://updates.vigem.org/api/github/ViGEm/ViGEmBus/updates` to
    `URL=https://aiu.api.nefarius.systems/api/github/ViGEm/ViGEmBus/updates`, or disable/uninstall the updater service.
-3. Open the firewall for UDP 26760 (admin PowerShell, once):
-   ```
-   netsh advfirewall firewall add rule name="Manette" dir=in action=allow protocol=UDP localport=26760 profile=any
-   ```
-   `profile=any` matters: a USB-tether adapter is often classed as a Public network.
-   For automatic discovery also allow mDNS (the phone asks on UDP 5353 and the PC answers):
-   ```
-   netsh advfirewall firewall add rule name="Manette mDNS" dir=in action=allow protocol=UDP localport=5353 profile=any
-   ```
+3. **Firewall:** nothing to add by hand. The first time Manette runs, Windows asks to allow it: click **Allow access**
+   and tick Private and Public (see "Windows Firewall prompt" below). If a managed PC has that prompt switched off and
+   phones cannot connect, add this once (admin PowerShell), where the program path is your `Manette.exe` (or `dotnet.exe`
+   for the console build): `netsh advfirewall firewall add rule name="Manette" dir=in action=allow program="<path>" protocol=UDP profile=any`
 4. Build and start the companion from the repo root:
    ```
    cd companion-windows
@@ -43,6 +38,23 @@ Do step 1 (Windows) first, then step 4 (phone).
    The QR needs a terminal that understands colours (Windows Terminal does); use `--no-qr` if it shows garbage. Keys while running:
    `p` new code, `s` status, `q` quit. If it says the driver is missing, ViGEmBus is not installed or not running.
 5. Package restore needs internet the first time (it downloads `Nefarius.ViGEm.Client` and the test packages).
+
+### Tray app and installer (instead of the console)
+The tray app is the everyday way to run Manette: an icon near the clock, a pairing window with the QR code, a list of
+connected and trusted phones (click to disconnect or forget), "Start with Windows", and a clear message if the driver is
+missing. **It has never been compiled** (no Windows toolchain where it was written), so expect small fixes on first build.
+- Run it from source: `cd companion-windows` then `dotnet run --project src/Manette.App`. Double-click the tray icon to pair.
+- Do not run it and the console `manette` together: they share the same UDP port and data folder.
+- Settings (port, PC name, discovery on/off) are in `%APPDATA%\Manette\settings.json`; bad values are repaired, not fatal.
+- Logs: `%APPDATA%\Manette\manette.log`.
+- **Installer:** install Inno Setup 6, then `powershell -File companion-windows\installer\build.ps1`. It publishes the app
+  (self-contained, a folder, not single-file) and builds `installer\output\Manette-Setup-0.1.0.exe`, which adds one program-scoped
+  firewall rule (UDP, all profiles), an optional "start with Windows", repoints ViGEmBus's updater if the driver is
+  already installed, and offers the driver download page if not. It does **not** bundle ViGEmBus. Untested: try an install and
+  an uninstall on a clean PC.
+- **Protected keys:** trusted-phone keys are now encrypted with Windows DPAPI (current user) in `trusted-devices.v2.json`;
+  an old plain-text `trusted-devices.json` is imported once and deleted. To check: pair a phone, quit, start again, reconnect
+  without a code; the file must not contain the key. (DPAPI was written without Windows to run it; this check is how we know.)
 
 ## 2. Check the PC half with no phone
 
@@ -119,6 +131,21 @@ and drop our sources in. This adds no extra dependencies.
 5. Tap **Exit**, then **Reconnect**: it must work with no code. Leave the app and return: it releases and reconnects.
 6. Try a second phone with a new code: it must be a second controller.
 7. Latency: the status line shows round-trip ms. For feel, record the phone and the tester with a 240 fps camera.
+
+## Windows Firewall "Allow access" prompt
+Windows shows this the first time a program starts listening. **Click "Allow access" and tick both Private and Public.**
+That creates the rules (confirmed: two program-scoped Allow rules, and phones connect). Do not close the box with the X: Windows
+then records Block rules for the program, and an enabled Block rule beats an Allow rule. To clear stale ones (admin PowerShell),
+then run Manette again and click Allow:
+```
+Get-NetFirewallRule -DisplayName "Manette","manette" | Where-Object { $_.Action -eq 'Block' } | Remove-NetFirewallRule
+```
+Rules are per program path, so each of `dotnet.exe` (console build), a dev-run tray app and an installed `Manette.exe` prompts once.
+Ticking only Public (or only Private) leaves the other network type blocked: if you change network type, you will be asked again.
+
+**The installer adds the rule itself** instead of relying on the prompt, because the prompt needs an administrator to answer, can be
+disabled by policy (then the app is blocked silently), and only covers the profiles you tick. It adds one UDP-only rule for
+`Manette.exe` on every profile and removes it, plus any prompt-created rules for that program, on uninstall.
 
 ## Troubleshooting
 
